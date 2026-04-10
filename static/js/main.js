@@ -49,7 +49,25 @@ document.addEventListener('click', function(e) {
   if (menu && avatar && !menu.contains(e.target) && !avatar.contains(e.target)) {
     menu.classList.remove('active');
   }
+  // Close mobile drawer on outside click
+  const drawer = document.getElementById('mobile-drawer');
+  const hamburger = document.querySelector('.nav-hamburger');
+  if (drawer && drawer.classList.contains('open') &&
+      !drawer.contains(e.target) && hamburger && !hamburger.contains(e.target)) {
+    drawer.classList.remove('open');
+    hamburger.classList.remove('open');
+  }
 });
+
+
+/* ──────── Mobile Menu Drawer ──────── */
+function toggleMobileMenu() {
+  const drawer = document.getElementById('mobile-drawer');
+  const btn = document.querySelector('.nav-hamburger');
+  if (!drawer) return;
+  drawer.classList.toggle('open');
+  if (btn) btn.classList.toggle('open');
+}
 
 
 /* ──────── Wishlist Toggle (AJAX) ──────── */

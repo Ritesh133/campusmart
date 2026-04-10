@@ -2305,58 +2305,237 @@ footer {
 
 
 /* ═══════════════════════════════════════
-   RESPONSIVE
+   MOBILE DRAWER & HAMBURGER
    ═══════════════════════════════════════ */
-@media (max-width: 768px) {
-  .nav-inner { padding: 0 16px; gap: 8px; }
-  .nav-search-block { display: none; }
-  .nav-college-badge .college-name { display: none; }
-  .nav-auth-btns { gap: 4px; }
-
-  .cs-hero { padding: 50px 16px 40px; }
-  .cs-stats { gap: 20px; }
-  .cs-stat-num { font-size: 22px; }
-
-  .hero { padding: 40px 16px; }
-  .hero-btns { flex-direction: column; align-items: center; }
-  .hero-stats { flex-direction: column; gap: 16px; }
-
-  .auth-card { grid-template-columns: 1fr; max-width: 440px; }
-  .auth-left { display: none; }
-  .auth-right { padding: 32px 24px; }
-
-  .listings-layout { grid-template-columns: 1fr; }
-  .filter-panel { position: static; }
-
-  .detail-layout { grid-template-columns: 1fr; gap: 24px; }
-
-  .form-row { grid-template-columns: 1fr; }
-
-  .footer-inner { grid-template-columns: 1fr 1fr; }
-  .footer-bottom { flex-direction: column; gap: 4px; text-align: center; }
-
-  .listings-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-  .card-img { height: 150px; }
-
-  .profile-head { flex-direction: column; text-align: center; }
-  .profile-stats { justify-content: center; }
-
-  .cat-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-@media (max-width: 480px) {
-  .cs-grid-section { padding: 24px 16px 40px; }
-  .college-card { flex-wrap: wrap; gap: 12px; }
-  .college-card-stats { flex: 1 0 100%; justify-content: center; }
+/* Desktop: show normal actions, hide mobile elements */
+.nav-mobile-right { display: none; }
+
+.nav-hamburger {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 38px;
+  height: 38px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nav-hamburger span {
+  display: block;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.mobile-drawer {
+  display: none;
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 99;
+  backdrop-filter: blur(2px);
+}
+.mobile-drawer.open { display: block; }
+
+.mobile-drawer-inner {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.mobile-search { width: 100%; }
+
+.mobile-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg2);
+  border-radius: var(--radius-md);
+}
+.mobile-nav-link {
+  display: block;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--bg2);
+  transition: background 0.2s;
+}
+.mobile-nav-link:hover { background: var(--bg3); }
+.mobile-nav-danger { color: var(--red); }
+
+/* ═══════════════════════════════════════
+   RESPONSIVE — TABLET (max 900px)
+   ═══════════════════════════════════════ */
+@media (max-width: 900px) {
+  .nav-college-badge .college-name { display: none; }
+  .nav-search-block { max-width: 280px; }
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE — MOBILE (max 768px)
+   ═══════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Prevent horizontal overflow globally */
+  html, body { overflow-x: hidden; max-width: 100%; }
+
+  /* Nav: hide desktop actions, show hamburger */
+  .nav-inner { padding: 0 14px; gap: 8px; height: 56px; }
+  .nav-logo { font-size: 17px; }
+  .nav-logo-icon { width: 28px; height: 28px; font-size: 13px; }
+  .nav-college-badge { display: none; }
+  .nav-search-block { display: none; }
+  .nav-actions-desktop { display: none; }
+  .nav-mobile-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .nav-sell-mobile { padding: 7px 12px; font-size: 13px; }
+
+  /* Main content padding */
+  main { overflow-x: hidden; }
+
+  /* College select page */
+  .cs-hero { padding: 40px 16px 32px; }
+  .cs-hero h1 { font-size: 28px; }
+  .cs-hero p { font-size: 14px; }
+  .cs-stats { gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .cs-stat-num { font-size: 22px; }
+  .cs-search-wrap { padding: 0 16px; }
+  .cs-grid-section { padding: 20px 16px 40px; }
+  .college-card { flex-wrap: wrap; gap: 10px; padding: 14px; }
+  .college-card-info { flex: 1; min-width: 0; }
+  .college-card-stats { flex: 1 0 100%; justify-content: flex-start; gap: 12px; }
   .college-card-arrow { display: none; }
 
+  /* Home hero */
+  .hero { padding: 36px 16px; }
+  .hero-title { font-size: 26px; }
+  .hero-desc { font-size: 14px; }
+  .hero-btns { flex-direction: column; align-items: stretch; gap: 10px; }
+  .hero-btns a { text-align: center; justify-content: center; }
+  .hero-stats { flex-direction: column; gap: 12px; }
+  .section { padding: 24px 16px; }
+  .sec-header { margin-bottom: 16px; }
+  .sec-title { font-size: 18px; }
+
+  /* Listings grid */
+  .listings-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .card-img { height: 140px; }
+  .card-body { padding: 10px; }
+  .card-title { font-size: 13px; }
+
+  /* Listings page layout */
+  .listings-layout { grid-template-columns: 1fr; gap: 16px; }
+  .filter-panel {
+    position: static;
+    border-radius: var(--radius-md);
+    padding: 14px;
+  }
+  .listings-area { min-width: 0; }
+
+  /* Detail page */
+  .detail-layout { grid-template-columns: 1fr; gap: 20px; }
+  .detail-image-section { border-radius: var(--radius-md); }
   .detail-title { font-size: 20px; }
-  .detail-price { font-size: 24px; }
-  .detail-actions { flex-direction: column; }
+  .detail-price { font-size: 26px; }
+  .detail-actions { flex-direction: column; gap: 10px; }
   .detail-actions > * { width: 100%; text-align: center; justify-content: center; }
-  .seller-actions { flex-direction: column; width: 100%; }
+  .seller-actions { flex-direction: column; width: 100%; gap: 10px; }
   .seller-actions > * { width: 100%; text-align: center; justify-content: center; }
 
+  /* Category grid */
+  .cat-grid { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 8px; }
+  .cat-card { padding: 14px 8px; }
+  .cat-card-icon { font-size: 24px; }
+  .cat-card-label { font-size: 11px; }
+
+  /* Auth pages */
+  .auth-card { grid-template-columns: 1fr; max-width: 440px; }
+  .auth-left { display: none; }
+  .auth-right { padding: 28px 20px; }
+
+  /* Sell / Form page */
   .sell-page { padding: 20px 16px 40px; }
   .form-card { padding: 16px; }
+  .form-row { grid-template-columns: 1fr; gap: 12px; }
+  .page-title { font-size: 22px; }
+
+  /* Profile page */
+  .profile-page { padding: 20px 16px; }
+  .profile-head { flex-direction: column; text-align: center; align-items: center; gap: 12px; }
+  .profile-stats { justify-content: center; gap: 16px; flex-wrap: wrap; }
+  .profile-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 6px; flex-wrap: nowrap; padding-bottom: 4px; }
+  .ptab { white-space: nowrap; font-size: 13px; padding: 8px 14px; }
+
+  /* Chat box */
+  .chat-box { border-radius: var(--radius-md); }
+  .chat-messages { max-height: 180px; }
+
+  /* Seller inbox */
+  .seller-inbox { margin-top: 16px; }
+
+  /* Footer */
+  .footer-inner { grid-template-columns: 1fr 1fr; gap: 24px; padding: 32px 16px; }
+  .footer-bottom { flex-direction: column; gap: 4px; text-align: center; padding: 16px; }
+  .footer-col h5 { font-size: 13px; }
+  .footer-col a { font-size: 13px; }
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE — SMALL MOBILE (max 480px)
+   ═══════════════════════════════════════ */
+@media (max-width: 480px) {
+  .nav-inner { padding: 0 12px; }
+  .nav-logo-icon { display: none; }
+
+  /* One-column grid on very small screens */
+  .listings-grid { grid-template-columns: 1fr; gap: 10px; }
+  .card-img { height: 180px; }
+
+  .college-card-stats { gap: 8px; }
+  .college-stat { font-size: 12px; }
+
+  .detail-title { font-size: 18px; }
+  .detail-price { font-size: 22px; }
+
+  .footer-inner { grid-template-columns: 1fr; gap: 20px; }
+
+  .sell-page { padding: 16px 12px 40px; }
+  .form-card { padding: 14px; }
+  .page-title { font-size: 20px; }
+
+  .cs-hero h1 { font-size: 24px; }
+  .cs-stat-num { font-size: 20px; }
+
+  .profile-tabs { gap: 4px; }
+  .ptab { font-size: 12px; padding: 7px 12px; }
 }
