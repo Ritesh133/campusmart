@@ -64,8 +64,8 @@
       <a href="{% url 'listing_detail' slug=college.slug pk=item.pk %}" class="product-card">
         <div class="card-img">
           <div class="card-img-inner">
-            {% if item.image %}
-              <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
+            {% if item.image_url %}
+              <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
             {% else %}
               <span class="card-emoji">{{ item.emoji }}</span>
             {% endif %}
@@ -109,8 +109,8 @@
       <a href="{% url 'listing_detail' slug=college.slug pk=item.pk %}" class="product-card">
         <div class="card-img">
           <div class="card-img-inner">
-            {% if item.image %}
-              <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
+            {% if item.image_url %}
+              <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
             {% else %}
               <span class="card-emoji">{{ item.emoji }}</span>
             {% endif %}

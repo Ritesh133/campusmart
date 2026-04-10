@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.db.models import Q, Count
 from django.views.decorators.http import require_POST
 from core.models import College, Listing, WishlistItem, Message, UserProfile
+from marketplace.storage import upload_image_to_supabase
 
 
 def college_select_view(request):
@@ -195,6 +196,11 @@ def create_listing_view(request, slug):
                 messages.error(request, error)
         else:
             try:
+                # Upload image to Supabase Storage (direct REST, no S3)
+                image_url = None
+                if image:
+                    image_url = upload_image_to_supabase(image, folder='listings')
+
                 listing = Listing.objects.create(
                     seller=request.user,
                     college=college,
@@ -205,7 +211,7 @@ def create_listing_view(request, slug):
                     category=category,
                     condition=condition,
                     location=location,
-                    image=image,
+                    image_url=image_url,
                 )
                 messages.success(request, 'Your listing has been posted! 🎉')
                 return redirect('listing_detail', slug=college.slug, pk=listing.pk)
@@ -258,7 +264,9 @@ def edit_listing_view(request, slug, pk):
                 listing.condition = condition
                 listing.location = location
                 if image:
-                    listing.image = image
+                    new_url = upload_image_to_supabase(image, folder='listings')
+                    if new_url:
+                        listing.image_url = new_url
                 listing.save()
                 messages.success(request, 'Listing updated successfully! 📝')
                 return redirect('listing_detail', slug=college.slug, pk=listing.pk)

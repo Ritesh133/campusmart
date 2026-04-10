@@ -19,8 +19,8 @@
     <!-- Image Section -->
     <div class="detail-image-section">
       <div class="detail-img-main">
-        {% if listing.image %}
-          <img src="{{ listing.image.url }}" alt="{{ listing.title }}" id="detail-main-img" />
+        {% if listing.image_url %}
+          <img src="{{ listing.image_url }}" alt="{{ listing.title }}" id="detail-main-img" />
         {% else %}
           <div class="detail-emoji-display">{{ listing.emoji }}</div>
         {% endif %}
@@ -164,8 +164,8 @@
       <a href="{% url 'listing_detail' slug=college.slug pk=item.pk %}" class="product-card">
         <div class="card-img">
           <div class="card-img-inner">
-            {% if item.image %}
-              <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
+            {% if item.image_url %}
+              <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
             {% else %}
               <span class="card-emoji">{{ item.emoji }}</span>
             {% endif %}

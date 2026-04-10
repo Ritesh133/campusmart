@@ -82,7 +82,8 @@ class Listing(models.Model):
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
     condition = models.CharField(max_length=50, choices=CONDITION_CHOICES, default='Good')
     location = models.CharField(max_length=200, blank=True, help_text='Pickup spot on campus')
-    image = models.ImageField(upload_to='listings/', null=True, blank=True)
+    image = models.ImageField(upload_to='listings/', null=True, blank=True)  # Legacy - kept for migration compat
+    image_url = models.URLField(max_length=500, null=True, blank=True)  # Supabase public URL
     is_sold = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     views = models.PositiveIntegerField(default=0)
