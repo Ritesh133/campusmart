@@ -237,13 +237,22 @@
 {% block extra_js %}
 <script>
 const CSRF_TOKEN = '{{ csrf_token }}';
-const MSG_URL = '{% url "send_message" slug=college.slug pk=listing.pk %}';
+const MSG_URL   = '{% url "send_message" slug=college.slug pk=listing.pk %}';
+const POLL_URL  = '{% url "poll_messages" slug=college.slug pk=listing.pk %}';
+const IS_SELLER = {{ user|stringformat:"s" }} === '{{ listing.seller }}' ? false : false; // unused
+{% if user.is_authenticated %}
+const AM_SELLER = {% if user == listing.seller %}true{% else %}false{% endif %};
+{% endif %}
+
+// Timestamp of last message we know about
+let lastTs = Date.now() - 10000; // start 10s in the past to not re-fetch history
 
 /* ── Buyer: toggle chat box ── */
 function toggleChatBox() {
   const box = document.getElementById('chat-box');
-  box.style.display = box.style.display === 'none' ? 'block' : 'none';
-  if (box.style.display !== 'none') {
+  const wasHidden = box.style.display === 'none';
+  box.style.display = wasHidden ? 'block' : 'none';
+  if (wasHidden) {
     const msgs = document.getElementById('chat-messages');
     msgs.scrollTop = msgs.scrollHeight;
     document.getElementById('chat-input').focus();
@@ -317,6 +326,62 @@ function sellerReply(buyerId) {
     })
     .catch(() => showToast('Error sending reply'));
 }
+
+/* ── Live polling: fetch new messages every 4 seconds ── */
+function pollNewMessages() {
+  fetch(`${POLL_URL}?since=${lastTs}`, { headers: { 'X-CSRFToken': CSRF_TOKEN } })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.messages || data.messages.length === 0) return;
+
+      data.messages.forEach(msg => {
+        lastTs = Math.max(lastTs, msg.ts + 1);
+
+        if (AM_SELLER) {
+          // Find correct thread body for this message
+          const senderId = msg.is_mine ? null : msg.sender_id;
+          // We can't reliably distinguish threads by sender alone from the poll
+          // Instead refresh all open thread bodies
+          document.querySelectorAll('.thread-body').forEach(body => {
+            if (body.style.display !== 'none') {
+              const msgs = body.querySelector('.chat-messages');
+              // Avoid duplicates by checking last message text
+              const lastMsg = msgs.querySelector('.chat-msg:last-child .chat-msg-text');
+              if (lastMsg && lastMsg.textContent === msg.content) return;
+              msgs.innerHTML += `<div class="chat-msg ${msg.is_mine ? 'sent' : 'received'}"><div class="chat-msg-text">${msg.content}</div><div class="chat-msg-time">${msg.time}</div></div>`;
+              msgs.scrollTop = msgs.scrollHeight;
+            }
+          });
+        } else {
+          // Buyer view
+          const box = document.getElementById('chat-box');
+          if (box) {
+            const msgs = document.getElementById('chat-messages');
+            if (!msgs) return;
+            const empty = msgs.querySelector('.chat-empty');
+            if (empty) empty.remove();
+            // Avoid duplicates
+            const lastMsg = msgs.querySelector('.chat-msg:last-child .chat-msg-text');
+            if (lastMsg && lastMsg.textContent === msg.content && msg.is_mine) return;
+            msgs.innerHTML += `<div class="chat-msg ${msg.is_mine ? 'sent' : 'received'}"><div class="chat-msg-text">${msg.content}</div><div class="chat-msg-time">${msg.time}</div></div>`;
+            msgs.scrollTop = msgs.scrollHeight;
+            // If box is hidden, show a notification badge
+            if (box.style.display === 'none' && !msg.is_mine) {
+              const chatBtn = document.querySelector('[onclick="toggleChatBox()"]');
+              if (chatBtn) chatBtn.textContent = '💬 New Message! (click to open)';
+              showToast('📨 New message from seller!');
+            }
+          }
+        }
+      });
+    })
+    .catch(() => {}); // Silent fail on network issues
+}
+
+{% if user.is_authenticated %}
+// Start polling every 4 seconds
+setInterval(pollNewMessages, 4000);
+{% endif %}
 </script>
 
 <style>

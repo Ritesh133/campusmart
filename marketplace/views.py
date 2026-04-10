@@ -11,8 +11,8 @@ from marketplace.storage import upload_image_to_supabase
 def college_select_view(request):
     """Landing page — choose a college marketplace to browse."""
     colleges = College.objects.filter(is_active=True).annotate(
-        member_count=Count('members'),
-        listing_count=Count('listings', filter=Q(listings__is_active=True, listings__is_sold=False))
+        member_count=Count('members', distinct=True),
+        listing_count=Count('listings', filter=Q(listings__is_active=True, listings__is_sold=False), distinct=True)
     )
     context = {
         'colleges': colleges,
@@ -355,6 +355,40 @@ def send_message_view(request, slug, pk):
     return JsonResponse({
         'status': 'sent',
         'sender': request.user.get_full_name() or request.user.username,
+    })
+
+
+@login_required
+def poll_messages_view(request, slug, pk):
+    """AJAX polling endpoint — returns messages newer than a given timestamp."""
+    listing = get_object_or_404(Listing, pk=pk)
+    since = request.GET.get('since', '0')  # Unix timestamp in milliseconds
+    from django.utils import timezone
+    import datetime
+    try:
+        since_dt = timezone.datetime.fromtimestamp(float(since) / 1000, tz=timezone.utc)
+    except (ValueError, OSError):
+        since_dt = timezone.datetime.min.replace(tzinfo=timezone.utc)
+
+    # Fetch messages relevant to this user (buyer or seller)
+    msgs = Message.objects.filter(
+        listing=listing,
+        created_at__gt=since_dt
+    ).filter(
+        Q(sender=request.user) | Q(receiver=request.user)
+    ).order_by('created_at')
+
+    return JsonResponse({
+        'messages': [
+            {
+                'content': m.content,
+                'is_mine': m.sender == request.user,
+                'time': m.created_at.strftime('%I:%M %p'),
+                'ts': int(m.created_at.timestamp() * 1000),
+                'sender_name': m.sender.get_full_name() or m.sender.username,
+            }
+            for m in msgs
+        ]
     })
 
 
