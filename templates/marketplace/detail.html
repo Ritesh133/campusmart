@@ -124,11 +124,11 @@
         {% endif %}
       </div>
 
-      <!-- Chat Box -->
+      <!-- ── BUYER CHAT BOX ── -->
       {% if user.is_authenticated and user != listing.seller %}
       <div class="chat-box" id="chat-box" style="display:none;">
         <div class="chat-box-header">
-          <h4>💬 Message Seller</h4>
+          <h4>💬 Chat with Seller</h4>
           <button onclick="toggleChatBox()" class="chat-close">✕</button>
         </div>
         <div class="chat-messages" id="chat-messages">
@@ -147,6 +147,53 @@
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
         </div>
+      </div>
+      {% endif %}
+
+      <!-- ── SELLER INBOX (on this listing) ── -->
+      {% if user == listing.seller %}
+      <div class="seller-inbox">
+        <div class="seller-inbox-title">
+          💬 Messages from Buyers
+          {% if buyer_threads %}
+          <span class="inbox-count">{{ buyer_threads|length }}</span>
+          {% endif %}
+        </div>
+
+        {% if buyer_threads %}
+        <div class="seller-threads">
+          {% for thread in buyer_threads %}
+          <div class="seller-thread" id="thread-{{ thread.buyer.pk }}">
+            <div class="thread-header" onclick="toggleThread({{ thread.buyer.pk }})">
+              <div class="thread-av">{{ thread.buyer.first_name.0|default:thread.buyer.username.0|upper }}</div>
+              <div class="thread-info">
+                <div class="thread-name">{{ thread.buyer.get_full_name|default:thread.buyer.username }}</div>
+                <div class="thread-preview">{{ thread.messages|last }}</div>
+              </div>
+              <svg class="thread-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="thread-body" id="thread-body-{{ thread.buyer.pk }}" style="display:none;">
+              <div class="chat-messages thread-msgs">
+                {% for msg in thread.messages %}
+                <div class="chat-msg {% if msg.sender == user %}sent{% else %}received{% endif %}">
+                  <div class="chat-msg-text">{{ msg.content }}</div>
+                  <div class="chat-msg-time">{{ msg.created_at|date:"h:i A" }}</div>
+                </div>
+                {% endfor %}
+              </div>
+              <div class="chat-input-row">
+                <input type="text" id="reply-input-{{ thread.buyer.pk }}" placeholder="Reply to {{ thread.buyer.first_name|default:thread.buyer.username }}…" onkeydown="if(event.key==='Enter') sellerReply({{ thread.buyer.pk }})" />
+                <button onclick="sellerReply({{ thread.buyer.pk }})" class="chat-send-btn">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="chat-empty" style="padding: 20px; text-align:center;">No messages yet. Buyers will contact you here! 📨</div>
+        {% endif %}
       </div>
       {% endif %}
     </div>
@@ -189,6 +236,10 @@
 
 {% block extra_js %}
 <script>
+const CSRF_TOKEN = '{{ csrf_token }}';
+const MSG_URL = '{% url "send_message" slug=college.slug pk=listing.pk %}';
+
+/* ── Buyer: toggle chat box ── */
 function toggleChatBox() {
   const box = document.getElementById('chat-box');
   box.style.display = box.style.display === 'none' ? 'block' : 'none';
@@ -199,35 +250,129 @@ function toggleChatBox() {
   }
 }
 
+/* ── Buyer: send message to seller ── */
 function sendMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if (!text) return;
 
-  const csrfToken = '{{ csrf_token }}';
+  const fd = new FormData();
+  fd.append('content', text);
+  fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
 
-  const formData = new FormData();
-  formData.append('content', text);
-  formData.append('csrfmiddlewaretoken', csrfToken);
+  fetch(MSG_URL, { method: 'POST', body: fd, headers: { 'X-CSRFToken': CSRF_TOKEN } })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'sent') {
+        const msgs = document.getElementById('chat-messages');
+        const empty = msgs.querySelector('.chat-empty');
+        if (empty) empty.remove();
+        msgs.innerHTML += `<div class="chat-msg sent"><div class="chat-msg-text">${text}</div><div class="chat-msg-time">Just now</div></div>`;
+        msgs.scrollTop = msgs.scrollHeight;
+        input.value = '';
+        showToast('Message sent! 📨');
+      }
+    })
+    .catch(() => showToast('Error sending message — try again'));
+}
 
-  fetch('{% url "send_message" slug=college.slug pk=listing.pk %}', {
-    method: 'POST',
-    body: formData,
-    headers: { 'X-CSRFToken': csrfToken }
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.status === 'sent') {
-      const msgs = document.getElementById('chat-messages');
-      const empty = msgs.querySelector('.chat-empty');
-      if (empty) empty.remove();
-      msgs.innerHTML += `<div class="chat-msg sent"><div class="chat-msg-text">${text}</div><div class="chat-msg-time">Just now</div></div>`;
-      msgs.scrollTop = msgs.scrollHeight;
-      input.value = '';
-      showToast('Message sent! 📨');
-    }
-  })
-  .catch(() => showToast('Error sending message'));
+/* ── Seller: toggle buyer thread accordion ── */
+function toggleThread(buyerId) {
+  const body = document.getElementById('thread-body-' + buyerId);
+  const isOpen = body.style.display !== 'none';
+  // Close all other threads
+  document.querySelectorAll('.thread-body').forEach(b => b.style.display = 'none');
+  document.querySelectorAll('.thread-chevron').forEach(c => c.style.transform = '');
+  if (!isOpen) {
+    body.style.display = 'block';
+    body.querySelector('.chat-messages').scrollTop = 99999;
+    body.querySelector('input').focus();
+    const chevron = document.querySelector(`#thread-${buyerId} .thread-chevron`);
+    if (chevron) chevron.style.transform = 'rotate(180deg)';
+  }
+}
+
+/* ── Seller: reply to a specific buyer ── */
+function sellerReply(buyerId) {
+  const input = document.getElementById('reply-input-' + buyerId);
+  const text = input.value.trim();
+  if (!text) return;
+
+  const fd = new FormData();
+  fd.append('content', text);
+  fd.append('buyer_id', buyerId);
+  fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+  fetch(MSG_URL, { method: 'POST', body: fd, headers: { 'X-CSRFToken': CSRF_TOKEN } })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'sent') {
+        const body = document.getElementById('thread-body-' + buyerId);
+        const msgs = body.querySelector('.chat-messages');
+        msgs.innerHTML += `<div class="chat-msg sent"><div class="chat-msg-text">${text}</div><div class="chat-msg-time">Just now</div></div>`;
+        msgs.scrollTop = msgs.scrollHeight;
+        input.value = '';
+        showToast('Reply sent! ✅');
+      }
+    })
+    .catch(() => showToast('Error sending reply'));
 }
 </script>
+
+<style>
+/* Seller Inbox on listing page */
+.seller-inbox {
+  margin-top: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.seller-inbox-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+.inbox-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.seller-thread {
+  border-bottom: 1px solid var(--border-light);
+}
+.seller-thread:last-child { border-bottom: none; }
+.thread-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.thread-header:hover { background: var(--surface-hover); }
+.thread-av {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--hero-gradient); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.thread-info { flex: 1; min-width: 0; }
+.thread-name { font-weight: 600; font-size: 14px; }
+.thread-preview { font-size: 12px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thread-chevron { flex-shrink: 0; color: var(--text3); transition: transform 0.25s; }
+.thread-body { border-top: 1px solid var(--border-light); }
+.thread-msgs { max-height: 200px; overflow-y: auto; }
+</style>
 {% endblock %}

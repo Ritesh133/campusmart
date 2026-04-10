@@ -147,18 +147,31 @@ def listing_detail_view(request, slug, pk):
 
     # Chat messages if user is logged in and is buyer or seller
     chat_messages = []
-    if request.user.is_authenticated:
-        chat_messages = Message.objects.filter(
-            listing=listing
-        ).filter(
-            Q(sender=request.user) | Q(receiver=request.user)
-        ).order_by('created_at')[:50]
+    buyer_threads = []  # for seller's view: list of {buyer, messages}
+    unread_from_buyers = 0
 
-        # Mark messages as read if the seller is viewing
+    if request.user.is_authenticated:
         if request.user == listing.seller:
-            Message.objects.filter(
-                listing=listing, receiver=request.user, is_read=False
-            ).update(is_read=True)
+            # Seller sees all conversations from all buyers
+            all_msgs = Message.objects.filter(listing=listing).select_related('sender', 'receiver').order_by('created_at')
+            # Group by buyer
+            threads_map = {}
+            for msg in all_msgs:
+                buyer = msg.sender if msg.sender != listing.seller else msg.receiver
+                if buyer.pk not in threads_map:
+                    threads_map[buyer.pk] = {'buyer': buyer, 'messages': []}
+                threads_map[buyer.pk]['messages'].append(msg)
+            buyer_threads = list(threads_map.values())
+            # Mark messages to seller as read
+            Message.objects.filter(listing=listing, receiver=request.user, is_read=False).update(is_read=True)
+            unread_from_buyers = 0  # just cleared
+        else:
+            # Buyer sees only their own thread with seller
+            chat_messages = Message.objects.filter(
+                listing=listing
+            ).filter(
+                Q(sender=request.user) | Q(receiver=request.user)
+            ).order_by('created_at')[:50]
 
     context = {
         'college': college,
@@ -166,6 +179,8 @@ def listing_detail_view(request, slug, pk):
         'is_wishlisted': is_wishlisted,
         'related': related,
         'chat_messages': chat_messages,
+        'buyer_threads': buyer_threads,
+        'unread_from_buyers': unread_from_buyers,
     }
     return render(request, 'marketplace/detail.html', context)
 
@@ -306,7 +321,7 @@ def toggle_wishlist_view(request, pk):
 
 @login_required
 def send_message_view(request, slug, pk):
-    """Send a message about a listing."""
+    """Send a message about a listing — handles both buyer→seller and seller→buyer."""
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
@@ -316,13 +331,31 @@ def send_message_view(request, slug, pk):
     if not content:
         return JsonResponse({'error': 'Message cannot be empty'}, status=400)
 
+    # Determine direction: buyer messages seller, seller replies to a specific buyer
+    if request.user == listing.seller:
+        # Seller replying — buyer_id must be passed
+        buyer_id = request.POST.get('buyer_id')
+        if not buyer_id:
+            return JsonResponse({'error': 'buyer_id required for seller reply'}, status=400)
+        from django.contrib.auth.models import User as AuthUser
+        try:
+            receiver = AuthUser.objects.get(pk=buyer_id)
+        except AuthUser.DoesNotExist:
+            return JsonResponse({'error': 'Buyer not found'}, status=404)
+    else:
+        # Buyer messaging seller
+        receiver = listing.seller
+
     Message.objects.create(
         sender=request.user,
-        receiver=listing.seller,
+        receiver=receiver,
         listing=listing,
         content=content,
     )
-    return JsonResponse({'status': 'sent'})
+    return JsonResponse({
+        'status': 'sent',
+        'sender': request.user.get_full_name() or request.user.username,
+    })
 
 
 @login_required
