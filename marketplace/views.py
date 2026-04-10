@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.db.models import Q, Count
 from django.views.decorators.http import require_POST
 from core.models import College, Listing, WishlistItem, Message, UserProfile
-from marketplace.storage import upload_image_to_supabase
+from marketplace.storage import upload_image_to_supabase, delete_image_from_supabase
 
 
 def college_select_view(request):
@@ -394,19 +394,35 @@ def poll_messages_view(request, slug, pk):
 
 @login_required
 def mark_sold_view(request, slug, pk):
-    """Mark a listing as sold."""
+    """Mark a listing as sold — hard-deletes all related data and the listing itself."""
     listing = get_object_or_404(Listing, pk=pk, seller=request.user)
-    listing.is_sold = True
-    listing.save(update_fields=['is_sold'])
-    messages.success(request, f'"{listing.title}" has been marked as sold! 🎉')
+    title = listing.title
+    image_url = listing.image_url
+
+    # Hard-delete: Django cascades FKs — Message and WishlistItem rows deleted automatically
+    listing.delete()
+
+    # Clean up image from Supabase Storage (fire-and-forget)
+    if image_url:
+        delete_image_from_supabase(image_url)
+
+    messages.success(request, f'"{title}" has been marked as sold and removed. 🎉')
     return redirect('profile')
 
 
 @login_required
 def delete_listing_view(request, slug, pk):
-    """Delete a listing."""
+    """Delete a listing — hard-deletes all related data and cleans up storage."""
     listing = get_object_or_404(Listing, pk=pk, seller=request.user)
-    listing.is_active = False
-    listing.save(update_fields=['is_active'])
-    messages.success(request, f'"{listing.title}" has been removed.')
+    title = listing.title
+    image_url = listing.image_url
+
+    # Hard-delete: cascades to Message and WishlistItem automatically
+    listing.delete()
+
+    # Clean up image from Supabase Storage (fire-and-forget)
+    if image_url:
+        delete_image_from_supabase(image_url)
+
+    messages.success(request, f'"{title}" has been permanently deleted.')
     return redirect('profile')

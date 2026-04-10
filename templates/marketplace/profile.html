@@ -19,7 +19,6 @@
       </div>
       <div class="profile-stats">
         <div class="ps"><strong>{{ listings_count }}</strong><span>Listings</span></div>
-        <div class="ps"><strong>{{ sold_count }}</strong><span>Sold</span></div>
         <div class="ps"><strong>{{ wishlist_count }}</strong><span>Wishlist</span></div>
         <div class="ps"><strong>{{ unread_count }}</strong><span>Messages</span></div>
       </div>
@@ -30,7 +29,6 @@
   <div class="profile-tabs">
     <div class="ptab active" onclick="switchTab('listings', this)">📦 My Listings</div>
     <div class="ptab" onclick="switchTab('wishlist', this)">❤️ Wishlist</div>
-    <div class="ptab" onclick="switchTab('sold', this)">✅ Sold Items</div>
     <div class="ptab" onclick="switchTab('inbox', this)">
       💬 Inbox {% if unread_count %}<span class="inbox-badge">{{ unread_count }}</span>{% endif %}
     </div>
@@ -100,39 +98,6 @@
     <div class="empty-state-sm">
       <div class="empty-icon-sm">🤍</div>
       <p>Your wishlist is empty. Browse listings and save items you like!</p>
-    </div>
-    {% endif %}
-  </div>
-
-  <!-- Sold Tab -->
-  <div class="ptab-content" id="ptab-sold">
-    {% if sold_listings %}
-    <div class="listings-grid">
-      {% for item in sold_listings %}
-      <div class="product-card sold-card">
-        <div class="card-img">
-          <div class="card-img-inner">
-            {% if item.image_url %}
-            <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
-            {% else %}
-            <span class="card-emoji">{{ item.emoji }}</span>
-            {% endif %}
-          </div>
-          <div class="card-sold-overlay">SOLD</div>
-        </div>
-        <div class="card-body">
-          <div class="card-title">{{ item.title }}</div>
-          <div class="card-price-row">
-            <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
-          </div>
-          <div class="card-meta">Sold · {{ item.updated_at|date:"d M Y" }}</div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-state-sm">
-      <p>No items sold yet.</p>
     </div>
     {% endif %}
   </div>

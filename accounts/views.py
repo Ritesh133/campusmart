@@ -91,10 +91,9 @@ def profile_view(request):
     from django.db.models import Max, Subquery, OuterRef
 
     profile = request.user.profile if hasattr(request.user, 'profile') else None
-    my_listings = Listing.objects.filter(seller=request.user, is_active=True, is_sold=False)
-    sold_listings = Listing.objects.filter(seller=request.user, is_sold=True)
+    my_listings = Listing.objects.filter(seller=request.user)
     wishlist_ids = WishlistItem.objects.filter(user=request.user).values_list('listing_id', flat=True)
-    wishlist_listings = Listing.objects.filter(id__in=wishlist_ids, is_active=True)
+    wishlist_listings = Listing.objects.filter(id__in=wishlist_ids)
 
     # Build inbox: group messages by (listing, other_user), show latest per thread
     all_messages = Message.objects.filter(
@@ -119,10 +118,8 @@ def profile_view(request):
     context = {
         'profile': profile,
         'my_listings': my_listings,
-        'sold_listings': sold_listings,
         'wishlist_listings': wishlist_listings,
         'listings_count': my_listings.count(),
-        'sold_count': sold_listings.count(),
         'wishlist_count': wishlist_listings.count(),
         'inbox_threads': inbox_threads,
         'unread_count': unread_count,

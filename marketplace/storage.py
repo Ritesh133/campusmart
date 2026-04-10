@@ -46,3 +46,26 @@ def upload_image_to_supabase(file_obj, folder='listings') -> str | None:
     # Log error details for debugging
     print(f"Supabase upload error: {response.status_code} — {response.text}")
     return None
+
+
+def delete_image_from_supabase(image_url: str) -> bool:
+    """
+    Delete an image from Supabase Storage given its public URL.
+    Returns True on success, False on failure.
+    """
+    if not SUPABASE_SERVICE_KEY or not image_url:
+        return False
+
+    # Extract the path after /object/public/{bucket}/
+    marker = f'/object/public/{BUCKET_NAME}/'
+    idx = image_url.find(marker)
+    if idx == -1:
+        return False
+    file_path = image_url[idx + len(marker):]
+
+    url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET_NAME}/{file_path}"
+    headers = {
+        'Authorization': f'Bearer {SUPABASE_SERVICE_KEY}',
+    }
+    response = requests.delete(url, headers=headers, timeout=10)
+    return response.status_code in (200, 204)
