@@ -1,0 +1,124 @@
+{% extends 'components/base.html' %}
+{% load static %}
+
+{% block title %}Browse Listings — {{ college.name }} | CampusMart{% endblock %}
+
+{% block content %}
+<div class="listings-page">
+  <div class="listings-page-top">
+    <div>
+      <h1 id="listings-heading">
+        {% if current_search %}Search: "{{ current_search }}"{% elif current_category %}{{ current_category }}{% else %}All Listings{% endif %}
+      </h1>
+      <p class="listings-subtitle">{{ result_count }} item{{ result_count|pluralize }} at {{ college.name }}</p>
+    </div>
+  </div>
+
+  <div class="listings-layout">
+    <!-- Filters Sidebar -->
+    <aside class="filter-panel">
+      <div class="filter-title">
+        Filters
+        <a href="{% url 'listings' slug=college.slug %}" class="filter-clear">Clear all</a>
+      </div>
+
+      <form method="GET" action="{% url 'listings' slug=college.slug %}" id="filter-form">
+        {% if current_search %}<input type="hidden" name="q" value="{{ current_search }}" />{% endif %}
+
+        <div class="filter-section">
+          <div class="filter-section-title">Category</div>
+          {% for cat_val, cat_label in categories %}
+          <label class="filter-check">
+            <input type="radio" name="category" value="{{ cat_val }}" {% if current_category == cat_val %}checked{% endif %} onchange="this.form.submit()" />
+            {{ cat_label }}
+          </label>
+          {% endfor %}
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Condition</div>
+          {% for cond_val, cond_label in conditions %}
+          <label class="filter-check">
+            <input type="radio" name="condition" value="{{ cond_val }}" {% if current_condition == cond_val %}checked{% endif %} onchange="this.form.submit()" />
+            {{ cond_label }}
+          </label>
+          {% endfor %}
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Price Range (₹)</div>
+          <div class="price-row">
+            <input type="number" name="price_min" placeholder="Min" value="{{ current_price_min }}" onchange="this.form.submit()" />
+            <span>–</span>
+            <input type="number" name="price_max" placeholder="Max" value="{{ current_price_max }}" onchange="this.form.submit()" />
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Sort By</div>
+          <select name="sort" onchange="this.form.submit()" class="sort-select">
+            <option value="latest" {% if current_sort == 'latest' %}selected{% endif %}>Latest first</option>
+            <option value="price-asc" {% if current_sort == 'price-asc' %}selected{% endif %}>Price: Low → High</option>
+            <option value="price-desc" {% if current_sort == 'price-desc' %}selected{% endif %}>Price: High → Low</option>
+            <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+          </select>
+        </div>
+      </form>
+    </aside>
+
+    <!-- Listings Grid -->
+    <div class="listings-main">
+      {% if listings %}
+      <div class="listings-grid">
+        {% for item in listings %}
+        <a href="{% url 'listing_detail' slug=college.slug pk=item.pk %}" class="product-card">
+          <div class="card-img">
+            <div class="card-img-inner">
+              {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
+              {% else %}
+                <span class="card-emoji">{{ item.emoji }}</span>
+              {% endif %}
+            </div>
+            {% if item.discount_percent > 0 %}
+            <div class="card-badge discount">-{{ item.discount_percent }}%</div>
+            {% endif %}
+            <button class="card-wish {% if item.pk in wishlist_ids %}active{% endif %}" onclick="event.preventDefault(); toggleWishlist({{ item.pk }}, this)" title="Toggle wishlist">
+              {% if item.pk in wishlist_ids %}❤️{% else %}🤍{% endif %}
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="card-title">{{ item.title }}</div>
+            <div class="card-price-row">
+              <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
+              {% if item.original_price %}
+              <span class="card-price-orig">₹{{ item.original_price|floatformat:0 }}</span>
+              {% endif %}
+            </div>
+            <div class="card-meta">
+              <span>{{ item.condition }}</span>
+              <span class="card-dot">·</span>
+              <span>{{ item.time_ago }}</span>
+            </div>
+            {% if item.location %}
+            <div class="card-location">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              {{ item.location }}
+            </div>
+            {% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h2>No listings found</h2>
+        <p>Try adjusting your filters or search terms</p>
+        <a href="{% url 'listings' slug=college.slug %}" class="btn-primary">Clear Filters</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

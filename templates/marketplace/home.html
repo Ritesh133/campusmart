@@ -1,0 +1,152 @@
+{% extends 'components/base.html' %}
+{% load static %}
+
+{% block title %}{{ college.name }} Marketplace — CampusMart{% endblock %}
+{% block meta_desc %}Browse and sell items at {{ college.name }}. Textbooks, electronics, furniture & more from fellow students.{% endblock %}
+
+{% block content %}
+<div class="home-page">
+  <!-- Hero -->
+  <div class="hero" style="--accent: {{ college.accent_color }};">
+    <div class="hero-inner">
+      <div class="hero-college-badge">{{ college.logo_emoji }} {{ college.name }}</div>
+      <h1>Buy &amp; Sell at <span>{{ college.name }}</span></h1>
+      <p>Your exclusive campus marketplace. Find textbooks, electronics, furniture, and more — all from fellow {{ college.name }} students.</p>
+      <div class="hero-btns">
+        <a href="{% url 'listings' slug=college.slug %}" class="hero-btn-primary">Browse Listings →</a>
+        <a href="{% url 'create_listing' slug=college.slug %}" class="hero-btn-secondary">Start Selling</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-icon">📦</div>
+          <div>
+            <div class="hero-stat-num">{{ listing_count }}</div>
+            <div class="hero-stat-label">Listings</div>
+          </div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-icon">👥</div>
+          <div>
+            <div class="hero-stat-num">{{ member_count }}</div>
+            <div class="hero-stat-label">Members</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="categories section">
+    <div class="sec-header">
+      <div class="sec-title">Browse Categories</div>
+      <a class="sec-link" href="{% url 'listings' slug=college.slug %}">View All →</a>
+    </div>
+    <div class="cat-grid">
+      {% for cat in categories %}
+      <a href="{% url 'listings' slug=college.slug %}?category={{ cat.id }}" class="cat-card">
+        <div class="cat-icon-wrap">{{ cat.emoji }}</div>
+        <div class="cat-name">{{ cat.id }}</div>
+        <div class="cat-count">{{ cat.count }} item{{ cat.count|pluralize }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Trending -->
+  {% if trending %}
+  <div class="section">
+    <div class="sec-header">
+      <div class="sec-title">🔥 Trending Now</div>
+      <a class="sec-link" href="{% url 'listings' slug=college.slug %}?sort=popular">See More →</a>
+    </div>
+    <div class="listings-grid">
+      {% for item in trending %}
+      <a href="{% url 'listing_detail' slug=college.slug pk=item.pk %}" class="product-card">
+        <div class="card-img">
+          <div class="card-img-inner">
+            {% if item.image %}
+              <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
+            {% else %}
+              <span class="card-emoji">{{ item.emoji }}</span>
+            {% endif %}
+          </div>
+          {% if item.created_at|timesince < "7 days" %}
+          <div class="card-badge">NEW</div>
+          {% endif %}
+          <button class="card-wish {% if item.pk in wishlist_ids %}active{% endif %}" onclick="event.preventDefault(); toggleWishlist({{ item.pk }}, this)" title="Toggle wishlist">
+            {% if item.pk in wishlist_ids %}❤️{% else %}🤍{% endif %}
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-title">{{ item.title }}</div>
+          <div class="card-price-row">
+            <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
+            {% if item.original_price %}
+            <span class="card-price-orig">₹{{ item.original_price|floatformat:0 }}</span>
+            {% endif %}
+          </div>
+          <div class="card-meta">
+            <span>{{ item.category }}</span>
+            <span class="card-dot">·</span>
+            <span>{{ item.time_ago }}</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Latest -->
+  {% if latest %}
+  <div class="section">
+    <div class="sec-header">
+      <div class="sec-title">🆕 Latest Listings</div>
+      <a class="sec-link" href="{% url 'listings' slug=college.slug %}">View All →</a>
+    </div>
+    <div class="listings-grid">
+      {% for item in latest %}
+      <a href="{% url 'listing_detail' slug=college.slug pk=item.pk %}" class="product-card">
+        <div class="card-img">
+          <div class="card-img-inner">
+            {% if item.image %}
+              <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
+            {% else %}
+              <span class="card-emoji">{{ item.emoji }}</span>
+            {% endif %}
+          </div>
+          <button class="card-wish {% if item.pk in wishlist_ids %}active{% endif %}" onclick="event.preventDefault(); toggleWishlist({{ item.pk }}, this)" title="Toggle wishlist">
+            {% if item.pk in wishlist_ids %}❤️{% else %}🤍{% endif %}
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-title">{{ item.title }}</div>
+          <div class="card-price-row">
+            <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
+            {% if item.original_price %}
+            <span class="card-price-orig">₹{{ item.original_price|floatformat:0 }}</span>
+            {% endif %}
+          </div>
+          <div class="card-meta">
+            <span>{{ item.category }}</span>
+            <span class="card-dot">·</span>
+            <span>{{ item.time_ago }}</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Empty State -->
+  {% if not trending and not latest %}
+  <div class="empty-state">
+    <div class="empty-icon">🏪</div>
+    <h2>No listings yet at {{ college.name }}</h2>
+    <p>Be the first to list an item on this marketplace!</p>
+    <a href="{% url 'create_listing' slug=college.slug %}" class="btn-primary">Post Your First Listing →</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

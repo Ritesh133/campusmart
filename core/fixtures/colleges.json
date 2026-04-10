@@ -1,0 +1,5 @@
+[
+  {"model": "core.college", "pk": 1, "fields": {"name": "IIIT Delhi", "slug": "iiit-delhi", "city": "New Delhi", "state": "Delhi", "logo_emoji": "🏛️", "accent_color": "#1E40AF", "is_active": true, "created_at": "2025-01-01T00:00:00Z"}},
+  {"model": "core.college", "pk": 8, "fields": {"name": "DTU (Delhi Technological University)", "slug": "dtu", "city": "New Delhi", "state": "Delhi", "logo_emoji": "🔧", "accent_color": "#880E4F", "is_active": true, "created_at": "2025-01-01T00:00:00Z"}},
+  {"model": "core.college", "pk": 9, "fields": {"name": "NSUT (Netaji Subhas University of Technology)", "slug": "nsut", "city": "New Delhi", "state": "Delhi", "logo_emoji": "💡", "accent_color": "#004D40", "is_active": true, "created_at": "2025-01-01T00:00:00Z"}}
+]

@@ -1,0 +1,231 @@
+{% extends 'components/base.html' %}
+{% load static %}
+
+{% block title %}{{ listing.title }} — CampusMart{% endblock %}
+{% block meta_desc %}{{ listing.description|truncatewords:30 }}{% endblock %}
+
+{% block content %}
+<div class="detail-page">
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="{% url 'college_home' slug=college.slug %}">{{ college.name }}</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="{% url 'listings' slug=college.slug %}?category={{ listing.category }}">{{ listing.category }}</a>
+    <span class="breadcrumb-sep">›</span>
+    <span>{{ listing.title|truncatewords:5 }}</span>
+  </div>
+
+  <div class="detail-layout">
+    <!-- Image Section -->
+    <div class="detail-image-section">
+      <div class="detail-img-main">
+        {% if listing.image %}
+          <img src="{{ listing.image.url }}" alt="{{ listing.title }}" id="detail-main-img" />
+        {% else %}
+          <div class="detail-emoji-display">{{ listing.emoji }}</div>
+        {% endif %}
+      </div>
+      {% if listing.is_sold %}
+      <div class="sold-overlay">
+        <span>SOLD</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Info Section -->
+    <div class="detail-info">
+      <div class="detail-badges">
+        <span class="detail-badge cat-badge">{{ listing.category }}</span>
+        <span class="detail-badge cond-badge">{{ listing.condition }}</span>
+        {% if listing.is_sold %}
+        <span class="detail-badge sold-badge">Sold</span>
+        {% endif %}
+      </div>
+
+      <h1 class="detail-title">{{ listing.title }}</h1>
+
+      <div class="detail-price-row">
+        <div class="detail-price">₹{{ listing.price|floatformat:0 }}</div>
+        {% if listing.original_price %}
+        <div class="detail-orig">₹{{ listing.original_price|floatformat:0 }}</div>
+        {% if listing.discount_percent > 0 %}
+        <div class="detail-discount">{{ listing.discount_percent }}% off</div>
+        {% endif %}
+        {% endif %}
+      </div>
+
+      <div class="detail-meta-row">
+        <div class="detail-meta-item">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          {{ listing.time_ago }}
+        </div>
+        <div class="detail-meta-item">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          {{ listing.views }} view{{ listing.views|pluralize }}
+        </div>
+        {% if listing.location %}
+        <div class="detail-meta-item">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {{ listing.location }}
+        </div>
+        {% endif %}
+      </div>
+
+      <hr class="detail-sep" />
+
+      <div class="detail-desc-section">
+        <h3>Description</h3>
+        <p class="detail-desc">{{ listing.description|linebreaksbr }}</p>
+      </div>
+
+      <hr class="detail-sep" />
+
+      <!-- Seller Info -->
+      <div class="seller-box">
+        <div class="seller-av">{{ listing.seller.first_name.0|default:listing.seller.username.0|upper }}</div>
+        <div class="seller-info">
+          <div class="seller-name">{{ listing.seller.get_full_name|default:listing.seller.username }}</div>
+          <div class="seller-sub">
+            {{ college.name }} · Joined {{ listing.seller.date_joined|date:"M Y" }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="detail-actions">
+        {% if user.is_authenticated and user != listing.seller and not listing.is_sold %}
+        <button class="btn-primary btn-lg" onclick="toggleChatBox()">
+          💬 Chat with Seller
+        </button>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+        <button class="btn-outline btn-lg" id="detail-wish-btn" onclick="toggleWishlist({{ listing.pk }}, this)">
+          {% if is_wishlisted %}❤️ Saved{% else %}🤍 Add to Wishlist{% endif %}
+        </button>
+        {% endif %}
+
+        {% if user == listing.seller %}
+        <div class="seller-actions">
+          <a href="{% url 'mark_sold' slug=college.slug pk=listing.pk %}" class="btn-success btn-lg" onclick="return confirm('Mark this item as sold?')">
+            ✅ Mark as Sold
+          </a>
+          <a href="{% url 'delete_listing' slug=college.slug pk=listing.pk %}" class="btn-danger btn-lg" onclick="return confirm('Delete this listing?')">
+            🗑️ Delete
+          </a>
+        </div>
+        {% endif %}
+
+        {% if not user.is_authenticated %}
+        <a href="{% url 'login' %}" class="btn-primary btn-lg">Login to Contact Seller</a>
+        {% endif %}
+      </div>
+
+      <!-- Chat Box -->
+      {% if user.is_authenticated and user != listing.seller %}
+      <div class="chat-box" id="chat-box" style="display:none;">
+        <div class="chat-box-header">
+          <h4>💬 Message Seller</h4>
+          <button onclick="toggleChatBox()" class="chat-close">✕</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          {% for msg in chat_messages %}
+          <div class="chat-msg {% if msg.sender == user %}sent{% else %}received{% endif %}">
+            <div class="chat-msg-text">{{ msg.content }}</div>
+            <div class="chat-msg-time">{{ msg.created_at|date:"h:i A" }}</div>
+          </div>
+          {% empty %}
+          <div class="chat-empty">No messages yet. Say hi! 👋</div>
+          {% endfor %}
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()" />
+          <button onclick="sendMessage()" class="chat-send-btn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Related Listings -->
+  {% if related %}
+  <div class="section related-section">
+    <div class="sec-header">
+      <div class="sec-title">Similar Items</div>
+      <a class="sec-link" href="{% url 'listings' slug=college.slug %}?category={{ listing.category }}">View All →</a>
+    </div>
+    <div class="listings-grid">
+      {% for item in related %}
+      <a href="{% url 'listing_detail' slug=college.slug pk=item.pk %}" class="product-card">
+        <div class="card-img">
+          <div class="card-img-inner">
+            {% if item.image %}
+              <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
+            {% else %}
+              <span class="card-emoji">{{ item.emoji }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">{{ item.title }}</div>
+          <div class="card-price-row">
+            <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
+          </div>
+          <div class="card-meta">{{ item.condition }} · {{ item.time_ago }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleChatBox() {
+  const box = document.getElementById('chat-box');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  if (box.style.display !== 'none') {
+    const msgs = document.getElementById('chat-messages');
+    msgs.scrollTop = msgs.scrollHeight;
+    document.getElementById('chat-input').focus();
+  }
+}
+
+function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+    document.cookie.split('; ').find(c => c.startsWith('csrftoken='))?.split('=')[1];
+
+  const formData = new FormData();
+  formData.append('content', text);
+  formData.append('csrfmiddlewaretoken', csrfToken);
+
+  fetch('{% url "send_message" slug=college.slug pk=listing.pk %}', {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-CSRFToken': csrfToken }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === 'sent') {
+      const msgs = document.getElementById('chat-messages');
+      const empty = msgs.querySelector('.chat-empty');
+      if (empty) empty.remove();
+      msgs.innerHTML += `<div class="chat-msg sent"><div class="chat-msg-text">${text}</div><div class="chat-msg-time">Just now</div></div>`;
+      msgs.scrollTop = msgs.scrollHeight;
+      input.value = '';
+      showToast('Message sent! 📨');
+    }
+  })
+  .catch(() => showToast('Error sending message'));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'components/base.html' %}
+{% load static %}
+
+{% block title %}CampusMart — Choose Your College Marketplace{% endblock %}
+{% block meta_desc %}Select your college to browse its exclusive student marketplace. Find textbooks, electronics, and more.{% endblock %}
+
+{% block content %}
+<div class="college-select-page">
+  <!-- Hero Section -->
+  <div class="cs-hero">
+    <div class="cs-hero-inner">
+      <div class="cs-badge">🎓 India's #1 Student Marketplace</div>
+      <h1>Buy &amp; Sell on <span class="gradient-text">Your Campus</span></h1>
+      <p>Choose your college to access an exclusive marketplace built just for students. Find textbooks, electronics, furniture, and more — all from fellow students at unbeatable prices.</p>
+      <div class="cs-stats">
+        <div class="cs-stat">
+          <div class="cs-stat-num">{{ colleges|length }}</div>
+          <div class="cs-stat-label">Colleges</div>
+        </div>
+        <div class="cs-stat">
+          <div class="cs-stat-num">{{ total_listings }}</div>
+          <div class="cs-stat-label">Listings</div>
+        </div>
+        <div class="cs-stat">
+          <div class="cs-stat-num">{{ total_users }}</div>
+          <div class="cs-stat-label">Students</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- College Search -->
+  <div class="cs-search-section">
+    <div class="cs-search-wrap">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="college-search" placeholder="Search for your college..." oninput="filterColleges(this.value)" autocomplete="off" />
+    </div>
+  </div>
+
+  <!-- College Grid -->
+  <div class="cs-grid-section">
+    <div class="cs-grid" id="college-grid">
+      {% for college in colleges %}
+      <a href="{% url 'college_home' slug=college.slug %}" class="college-card" data-name="{{ college.name|lower }}" data-city="{{ college.city|lower }}">
+        <div class="college-card-emoji" style="background: {{ college.accent_color }}15;">
+          <span>{{ college.logo_emoji }}</span>
+        </div>
+        <div class="college-card-info">
+          <h3>{{ college.name }}</h3>
+          <div class="college-card-location">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {{ college.city }}, {{ college.state }}
+          </div>
+        </div>
+        <div class="college-card-stats">
+          <div class="college-stat">
+            <span class="college-stat-num">{{ college.listing_count }}</span>
+            <span class="college-stat-label">listings</span>
+          </div>
+          <div class="college-stat">
+            <span class="college-stat-num">{{ college.member_count }}</span>
+            <span class="college-stat-label">members</span>
+          </div>
+        </div>
+        <div class="college-card-arrow">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    <div class="cs-empty" id="cs-empty" style="display:none;">
+      <div class="cs-empty-icon">🔍</div>
+      <h3>No colleges found</h3>
+      <p>Try a different search term</p>
+    </div>
+  </div>
+
+  <!-- CTA Section -->
+  <div class="cs-cta">
+    <div class="cs-cta-inner">
+      <h2>Don't see your college?</h2>
+      <p>We're adding new colleges every week. Contact us and we'll add yours!</p>
+      <button class="cs-cta-btn" onclick="showToast('Coming soon! Email us at hello@campusmart.in')">Request Your College →</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterColleges(query) {
+  const q = query.toLowerCase().trim();
+  const cards = document.querySelectorAll('.college-card');
+  let visible = 0;
+  cards.forEach(card => {
+    const name = card.dataset.name;
+    const city = card.dataset.city;
+    const match = !q || name.includes(q) || city.includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  document.getElementById('cs-empty').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+{% endblock %}
