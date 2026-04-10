@@ -165,6 +165,7 @@ def listing_detail_view(request, slug, pk):
 
 @login_required
 def create_listing_view(request, slug):
+    # Force Redeploy - Fix for VariableDoesNotExist listing
     """Post a new listing — auto-scoped to user's college."""
     college = get_object_or_404(College, slug=slug, is_active=True)
 

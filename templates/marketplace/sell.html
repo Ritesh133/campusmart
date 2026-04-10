@@ -16,7 +16,7 @@
 
       <div class="form-group">
         <label for="sell-title">Title *</label>
-        <input type="text" id="sell-title" name="title" placeholder="e.g. Engineering Mathematics Textbook" maxlength="80" required value="{{ request.POST.title|default:listing.title|default:'' }}" oninput="updateCharCount(this, 'cc-title', 80)" />
+        <input type="text" id="sell-title" name="title" placeholder="e.g. Engineering Mathematics Textbook" maxlength="80" required value="{% if is_edit %}{{ listing.title }}{% else %}{{ request.POST.title|default:'' }}{% endif %}" oninput="updateCharCount(this, 'cc-title', 80)" />
         <div class="char-count"><span id="cc-title">0</span>/80</div>
       </div>
 
@@ -26,7 +26,7 @@
           <select id="sell-category" name="category" required>
             <option value="">Select…</option>
             {% for cat_val, cat_label in categories %}
-            <option value="{{ cat_val }}" {% if request.POST.category == cat_val or listing.category == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+            <option value="{{ cat_val }}" {% if is_edit %}{% if listing.category == cat_val %}selected{% endif %}{% else %}{% if request.POST.category == cat_val %}selected{% endif %}{% endif %}>{{ cat_label }}</option>
             {% endfor %}
           </select>
         </div>
@@ -34,7 +34,7 @@
           <label for="sell-condition">Condition</label>
           <select id="sell-condition" name="condition">
             {% for cond_val, cond_label in conditions %}
-            <option value="{{ cond_val }}" {% if request.POST.condition == cond_val or listing.condition == cond_val %}selected{% endif %}>{{ cond_label }}</option>
+            <option value="{{ cond_val }}" {% if is_edit %}{% if listing.condition == cond_val %}selected{% endif %}{% else %}{% if request.POST.condition == cond_val %}selected{% endif %}{% endif %}>{{ cond_label }}</option>
             {% endfor %}
           </select>
         </div>
@@ -43,18 +43,18 @@
       <div class="form-row">
         <div class="form-group">
           <label for="sell-price">Price (₹) *</label>
-          <input type="number" id="sell-price" name="price" placeholder="e.g. 450" min="0" required value="{{ request.POST.price|default:listing.price|floatformat:0|default:'' }}" />
+          <input type="number" id="sell-price" name="price" placeholder="e.g. 450" min="0" required value="{% if is_edit %}{{ listing.price|floatformat:0 }}{% else %}{{ request.POST.price|default:'' }}{% endif %}" />
         </div>
         <div class="form-group">
           <label for="sell-original-price">Original Price (₹)</label>
-          <input type="number" id="sell-original-price" name="original_price" placeholder="Optional" min="0" value="{{ request.POST.original_price|default:listing.original_price|floatformat:0|default:'' }}" />
+          <input type="number" id="sell-original-price" name="original_price" placeholder="Optional" min="0" value="{% if is_edit %}{% if listing.original_price %}{{ listing.original_price|floatformat:0 }}{% endif %}{% else %}{{ request.POST.original_price|default:'' }}{% endif %}" />
           <div class="input-hint">Show buyers the discount</div>
         </div>
       </div>
 
       <div class="form-group">
         <label for="sell-location">Campus Pickup Spot</label>
-        <input type="text" id="sell-location" name="location" placeholder="e.g. Library entrance, Hostel gate, Canteen" value="{{ request.POST.location|default:listing.location|default:'' }}" />
+        <input type="text" id="sell-location" name="location" placeholder="e.g. Library entrance, Hostel gate, Canteen" value="{% if is_edit %}{{ listing.location }}{% else %}{{ request.POST.location|default:'' }}{% endif %}" />
       </div>
     </div>
 
@@ -62,7 +62,7 @@
       <div class="form-card-title">📝 Description</div>
       <div class="form-group">
         <label for="sell-desc">Description *</label>
-        <textarea id="sell-desc" name="description" placeholder="Describe your item — edition, condition details, what's included…" maxlength="500" required oninput="updateCharCount(this, 'cc-desc', 500)">{{ request.POST.description|default:listing.description|default:'' }}</textarea>
+        <textarea id="sell-desc" name="description" placeholder="Describe your item — edition, condition details, what's included…" maxlength="500" required oninput="updateCharCount(this, 'cc-desc', 500)">{% if is_edit %}{{ listing.description }}{% else %}{{ request.POST.description|default:'' }}{% endif %}</textarea>
         <div class="char-count"><span id="cc-desc">0</span>/500</div>
       </div>
     </div>
