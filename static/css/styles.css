@@ -2353,7 +2353,9 @@ footer {
   .detail-title { font-size: 20px; }
   .detail-price { font-size: 24px; }
   .detail-actions { flex-direction: column; }
-  .seller-actions { flex-direction: column; }
+  .detail-actions > * { width: 100%; text-align: center; justify-content: center; }
+  .seller-actions { flex-direction: column; width: 100%; }
+  .seller-actions > * { width: 100%; text-align: center; justify-content: center; }
 
   .sell-page { padding: 20px 16px 40px; }
   .form-card { padding: 16px; }

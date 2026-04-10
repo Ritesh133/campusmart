@@ -1,134 +1,126 @@
-{% extends 'components/base.html' %}
-{% load static %}
-
-{% block title %}My Profile — CampusMart{% endblock %}
-
-{% block content %}
-<div class="profile-page">
-  <div class="profile-head">
-    <div class="profile-av">{{ user.first_name.0|default:user.username.0|upper }}</div>
-    <div class="profile-info">
-      <div class="profile-nm">{{ user.get_full_name|default:user.username }}</div>
-      <div class="profile-college">
-        {% if profile and profile.college %}
-        📍 {{ profile.college.name }} · {{ profile.college.city }}
-        {% endif %}
-        · Member since {{ user.date_joined|date:"M Y" }}
-      </div>
-      <div class="profile-stats">
-        <div class="ps"><strong>{{ listings_count }}</strong><span>Listings</span></div>
-        <div class="ps"><strong>{{ sold_count }}</strong><span>Sold</span></div>
-        <div class="ps"><strong>{{ wishlist_count }}</strong><span>Wishlist</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tabs -->
-  <div class="profile-tabs">
-    <div class="ptab active" onclick="switchTab('listings', this)">📦 My Listings</div>
-    <div class="ptab" onclick="switchTab('wishlist', this)">❤️ Wishlist</div>
-    <div class="ptab" onclick="switchTab('sold', this)">✅ Sold Items</div>
-  </div>
-
-  <!-- My Listings Tab -->
-  <div class="ptab-content active" id="ptab-listings">
-    {% if my_listings %}
-    <div class="listings-grid">
-      {% for item in my_listings %}
-      <a href="{% url 'listing_detail' slug=item.college.slug pk=item.pk %}" class="product-card">
-        <div class="card-img">
-          <div class="card-img-inner">
-            {% if item.image %}
-              <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
-            {% else %}
-              <span class="card-emoji">{{ item.emoji }}</span>
-            {% endif %}
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="card-title">{{ item.title }}</div>
-          <div class="card-price-row">
-            <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
-          </div>
-          <div class="card-meta">{{ item.views }} views · {{ item.time_ago }}</div>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-state-sm">
-      <p>You haven't posted any listings yet.</p>
-      {% if profile and profile.college %}
-      <a href="{% url 'create_listing' slug=profile.college.slug %}" class="btn-primary">Post Your First Listing →</a>
-      {% endif %}
-    </div>
+<div class="profile-av">{{ user.first_name.0|default:user.username.0|upper }}</div>
+<div class="profile-info">
+  <div class="profile-nm">{{ user.get_full_name|default:user.username }}</div>
+  <div class="profile-college">
+    {% if profile and profile.college %}
+    📍 {{ profile.college.name }} · {{ profile.college.city }}
     {% endif %}
+    · Member since {{ user.date_joined|date:"M Y" }}
   </div>
-
-  <!-- Wishlist Tab -->
-  <div class="ptab-content" id="ptab-wishlist">
-    {% if wishlist_listings %}
-    <div class="listings-grid">
-      {% for item in wishlist_listings %}
-      <a href="{% url 'listing_detail' slug=item.college.slug pk=item.pk %}" class="product-card">
-        <div class="card-img">
-          <div class="card-img-inner">
-            {% if item.image %}
-              <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
-            {% else %}
-              <span class="card-emoji">{{ item.emoji }}</span>
-            {% endif %}
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="card-title">{{ item.title }}</div>
-          <div class="card-price-row">
-            <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
-          </div>
-          <div class="card-meta">{{ item.category }} · {{ item.time_ago }}</div>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-state-sm">
-      <div class="empty-icon-sm">🤍</div>
-      <p>Your wishlist is empty. Browse listings and save items you like!</p>
-    </div>
-    {% endif %}
+  <div class="profile-stats">
+    <div class="ps"><strong>{{ listings_count }}</strong><span>Listings</span></div>
+    <div class="ps"><strong>{{ sold_count }}</strong><span>Sold</span></div>
+    <div class="ps"><strong>{{ wishlist_count }}</strong><span>Wishlist</span></div>
   </div>
+</div>
+</div>
 
-  <!-- Sold Tab -->
-  <div class="ptab-content" id="ptab-sold">
-    {% if sold_listings %}
-    <div class="listings-grid">
-      {% for item in sold_listings %}
-      <div class="product-card sold-card">
-        <div class="card-img">
-          <div class="card-img-inner">
-            {% if item.image %}
-              <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
-            {% else %}
-              <span class="card-emoji">{{ item.emoji }}</span>
-            {% endif %}
-          </div>
-          <div class="card-sold-overlay">SOLD</div>
-        </div>
-        <div class="card-body">
-          <div class="card-title">{{ item.title }}</div>
-          <div class="card-price-row">
-            <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
-          </div>
-          <div class="card-meta">Sold · {{ item.updated_at|date:"d M Y" }}</div>
+<!-- Tabs -->
+<div class="profile-tabs">
+  <div class="ptab active" onclick="switchTab('listings', this)">📦 My Listings</div>
+  <div class="ptab" onclick="switchTab('wishlist', this)">❤️ Wishlist</div>
+  <div class="ptab" onclick="switchTab('sold', this)">✅ Sold Items</div>
+</div>
+
+<!-- My Listings Tab -->
+<div class="ptab-content active" id="ptab-listings">
+  {% if my_listings %}
+  <div class="listings-grid">
+    {% for item in my_listings %}
+    <a href="{% url 'listing_detail' slug=item.college.slug pk=item.pk %}" class="product-card">
+      <div class="card-img">
+        <div class="card-img-inner">
+          {% if item.image %}
+          <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
+          {% else %}
+          <span class="card-emoji">{{ item.emoji }}</span>
+          {% endif %}
         </div>
       </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-state-sm">
-      <p>No items sold yet.</p>
-    </div>
+      <div class="card-body">
+        <div class="card-title">{{ item.title }}</div>
+        <div class="card-price-row">
+          <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
+        </div>
+        <div class="card-meta">{{ item.views }} views · {{ item.time_ago }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state-sm">
+    <p>You haven't posted any listings yet.</p>
+    {% if profile and profile.college %}
+    <a href="{% url 'create_listing' slug=profile.college.slug %}" class="btn-primary">Post Your First Listing →</a>
     {% endif %}
   </div>
+  {% endif %}
+</div>
+
+<!-- Wishlist Tab -->
+<div class="ptab-content" id="ptab-wishlist">
+  {% if wishlist_listings %}
+  <div class="listings-grid">
+    {% for item in wishlist_listings %}
+    <a href="{% url 'listing_detail' slug=item.college.slug pk=item.pk %}" class="product-card">
+      <div class="card-img">
+        <div class="card-img-inner">
+          {% if item.image %}
+          <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
+          {% else %}
+          <span class="card-emoji">{{ item.emoji }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ item.title }}</div>
+        <div class="card-price-row">
+          <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
+        </div>
+        <div class="card-meta">{{ item.category }} · {{ item.time_ago }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state-sm">
+    <div class="empty-icon-sm">🤍</div>
+    <p>Your wishlist is empty. Browse listings and save items you like!</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Sold Tab -->
+<div class="ptab-content" id="ptab-sold">
+  {% if sold_listings %}
+  <div class="listings-grid">
+    {% for item in sold_listings %}
+    <div class="product-card sold-card">
+      <div class="card-img">
+        <div class="card-img-inner">
+          {% if item.image %}
+          <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy" />
+          {% else %}
+          <span class="card-emoji">{{ item.emoji }}</span>
+          {% endif %}
+        </div>
+        <div class="card-sold-overlay">SOLD</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ item.title }}</div>
+        <div class="card-price-row">
+          <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
+        </div>
+        <div class="card-meta">Sold · {{ item.updated_at|date:"d M Y" }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state-sm">
+    <p>No items sold yet.</p>
+  </div>
+  {% endif %}
+</div>
 </div>
 {% endblock %}

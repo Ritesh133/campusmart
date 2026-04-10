@@ -107,6 +107,9 @@
 
         {% if user == listing.seller %}
         <div class="seller-actions">
+          <a href="{% url 'edit_listing' slug=college.slug pk=listing.pk %}" class="btn-outline btn-lg">
+            ✏️ Edit
+          </a>
           <a href="{% url 'mark_sold' slug=college.slug pk=listing.pk %}" class="btn-success btn-lg" onclick="return confirm('Mark this item as sold?')">
             ✅ Mark as Sold
           </a>
@@ -201,8 +204,7 @@ function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-    document.cookie.split('; ').find(c => c.startsWith('csrftoken='))?.split('=')[1];
+  const csrfToken = '{{ csrf_token }}';
 
   const formData = new FormData();
   formData.append('content', text);

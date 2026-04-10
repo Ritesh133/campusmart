@@ -220,6 +220,59 @@ def create_listing_view(request, slug):
 
 
 @login_required
+def edit_listing_view(request, slug, pk):
+    """Edit an existing listing."""
+    college = get_object_or_404(College, slug=slug, is_active=True)
+    listing = get_object_or_404(Listing, pk=pk, college=college, seller=request.user)
+
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        price = request.POST.get('price', '')
+        original_price = request.POST.get('original_price', '')
+        category = request.POST.get('category', '')
+        condition = request.POST.get('condition', 'Good')
+        location = request.POST.get('location', '').strip()
+        image = request.FILES.get('image')
+
+        # Validation
+        errors = []
+        if not title: errors.append('Title is required.')
+        if not description: errors.append('Description is required.')
+        if not price: errors.append('Price is required.')
+        if not category: errors.append('Category is required.')
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+        else:
+            try:
+                listing.title = title
+                listing.description = description
+                listing.price = float(price)
+                listing.original_price = float(original_price) if original_price else None
+                listing.category = category
+                listing.condition = condition
+                listing.location = location
+                if image:
+                    listing.image = image
+                listing.save()
+                messages.success(request, 'Listing updated successfully! 📝')
+                return redirect('listing_detail', slug=college.slug, pk=listing.pk)
+            except (ValueError, Exception) as e:
+                messages.error(request, f'Error updating listing: {str(e)}')
+
+    context = {
+        'college': college,
+        'listing': listing, # Preload the form
+        'categories': Listing.CATEGORY_CHOICES,
+        'conditions': Listing.CONDITION_CHOICES,
+        'is_edit': True,
+    }
+    return render(request, 'marketplace/sell.html', context)
+
+
+@login_required
 def toggle_wishlist_view(request, pk):
     """AJAX endpoint to toggle wishlist status."""
     if request.method != 'POST':
