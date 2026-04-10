@@ -154,6 +154,12 @@ def listing_detail_view(request, slug, pk):
             Q(sender=request.user) | Q(receiver=request.user)
         ).order_by('created_at')[:50]
 
+        # Mark messages as read if the seller is viewing
+        if request.user == listing.seller:
+            Message.objects.filter(
+                listing=listing, receiver=request.user, is_read=False
+            ).update(is_read=True)
+
     context = {
         'college': college,
         'listing': listing,

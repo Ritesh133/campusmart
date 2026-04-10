@@ -1,126 +1,217 @@
-<div class="profile-av">{{ user.first_name.0|default:user.username.0|upper }}</div>
-<div class="profile-info">
-  <div class="profile-nm">{{ user.get_full_name|default:user.username }}</div>
-  <div class="profile-college">
-    {% if profile and profile.college %}
-    📍 {{ profile.college.name }} · {{ profile.college.city }}
-    {% endif %}
-    · Member since {{ user.date_joined|date:"M Y" }}
-  </div>
-  <div class="profile-stats">
-    <div class="ps"><strong>{{ listings_count }}</strong><span>Listings</span></div>
-    <div class="ps"><strong>{{ sold_count }}</strong><span>Sold</span></div>
-    <div class="ps"><strong>{{ wishlist_count }}</strong><span>Wishlist</span></div>
-  </div>
-</div>
-</div>
+{% extends 'components/base.html' %}
+{% load static %}
 
-<!-- Tabs -->
-<div class="profile-tabs">
-  <div class="ptab active" onclick="switchTab('listings', this)">📦 My Listings</div>
-  <div class="ptab" onclick="switchTab('wishlist', this)">❤️ Wishlist</div>
-  <div class="ptab" onclick="switchTab('sold', this)">✅ Sold Items</div>
-</div>
+{% block title %}My Profile — CampusMart{% endblock %}
 
-<!-- My Listings Tab -->
-<div class="ptab-content active" id="ptab-listings">
-  {% if my_listings %}
-  <div class="listings-grid">
-    {% for item in my_listings %}
-    <a href="{% url 'listing_detail' slug=item.college.slug pk=item.pk %}" class="product-card">
-      <div class="card-img">
-        <div class="card-img-inner">
-          {% if item.image_url %}
-          <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
-          {% else %}
-          <span class="card-emoji">{{ item.emoji }}</span>
-          {% endif %}
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="card-title">{{ item.title }}</div>
-        <div class="card-price-row">
-          <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
-        </div>
-        <div class="card-meta">{{ item.views }} views · {{ item.time_ago }}</div>
-      </div>
-    </a>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="empty-state-sm">
-    <p>You haven't posted any listings yet.</p>
-    {% if profile and profile.college %}
-    <a href="{% url 'create_listing' slug=profile.college.slug %}" class="btn-primary">Post Your First Listing →</a>
-    {% endif %}
-  </div>
-  {% endif %}
-</div>
+{% block content %}
+<div class="profile-page">
 
-<!-- Wishlist Tab -->
-<div class="ptab-content" id="ptab-wishlist">
-  {% if wishlist_listings %}
-  <div class="listings-grid">
-    {% for item in wishlist_listings %}
-    <a href="{% url 'listing_detail' slug=item.college.slug pk=item.pk %}" class="product-card">
-      <div class="card-img">
-        <div class="card-img-inner">
-          {% if item.image_url %}
-          <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
-          {% else %}
-          <span class="card-emoji">{{ item.emoji }}</span>
-          {% endif %}
-        </div>
+  <!-- Profile Header -->
+  <div class="profile-head">
+    <div class="profile-av">{{ user.first_name.0|default:user.username.0|upper }}</div>
+    <div class="profile-info">
+      <div class="profile-nm">{{ user.get_full_name|default:user.username }}</div>
+      <div class="profile-college">
+        {% if profile and profile.college %}
+        📍 {{ profile.college.name }} · {{ profile.college.city }}
+        {% endif %}
+        · Member since {{ user.date_joined|date:"M Y" }}
       </div>
-      <div class="card-body">
-        <div class="card-title">{{ item.title }}</div>
-        <div class="card-price-row">
-          <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
-        </div>
-        <div class="card-meta">{{ item.category }} · {{ item.time_ago }}</div>
-      </div>
-    </a>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="empty-state-sm">
-    <div class="empty-icon-sm">🤍</div>
-    <p>Your wishlist is empty. Browse listings and save items you like!</p>
-  </div>
-  {% endif %}
-</div>
-
-<!-- Sold Tab -->
-<div class="ptab-content" id="ptab-sold">
-  {% if sold_listings %}
-  <div class="listings-grid">
-    {% for item in sold_listings %}
-    <div class="product-card sold-card">
-      <div class="card-img">
-        <div class="card-img-inner">
-          {% if item.image_url %}
-          <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
-          {% else %}
-          <span class="card-emoji">{{ item.emoji }}</span>
-          {% endif %}
-        </div>
-        <div class="card-sold-overlay">SOLD</div>
-      </div>
-      <div class="card-body">
-        <div class="card-title">{{ item.title }}</div>
-        <div class="card-price-row">
-          <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
-        </div>
-        <div class="card-meta">Sold · {{ item.updated_at|date:"d M Y" }}</div>
+      <div class="profile-stats">
+        <div class="ps"><strong>{{ listings_count }}</strong><span>Listings</span></div>
+        <div class="ps"><strong>{{ sold_count }}</strong><span>Sold</span></div>
+        <div class="ps"><strong>{{ wishlist_count }}</strong><span>Wishlist</span></div>
+        <div class="ps"><strong>{{ unread_count }}</strong><span>Messages</span></div>
       </div>
     </div>
-    {% endfor %}
   </div>
-  {% else %}
-  <div class="empty-state-sm">
-    <p>No items sold yet.</p>
+
+  <!-- Tabs -->
+  <div class="profile-tabs">
+    <div class="ptab active" onclick="switchTab('listings', this)">📦 My Listings</div>
+    <div class="ptab" onclick="switchTab('wishlist', this)">❤️ Wishlist</div>
+    <div class="ptab" onclick="switchTab('sold', this)">✅ Sold Items</div>
+    <div class="ptab" onclick="switchTab('inbox', this)">
+      💬 Inbox {% if unread_count %}<span class="inbox-badge">{{ unread_count }}</span>{% endif %}
+    </div>
   </div>
-  {% endif %}
+
+  <!-- My Listings Tab -->
+  <div class="ptab-content active" id="ptab-listings">
+    {% if my_listings %}
+    <div class="listings-grid">
+      {% for item in my_listings %}
+      <a href="{% url 'listing_detail' slug=item.college.slug pk=item.pk %}" class="product-card">
+        <div class="card-img">
+          <div class="card-img-inner">
+            {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
+            {% else %}
+            <span class="card-emoji">{{ item.emoji }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">{{ item.title }}</div>
+          <div class="card-price-row">
+            <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
+          </div>
+          <div class="card-meta">{{ item.views }} views · {{ item.time_ago }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state-sm">
+      <p>You haven't posted any listings yet.</p>
+      {% if profile and profile.college %}
+      <a href="{% url 'create_listing' slug=profile.college.slug %}" class="btn-primary">Post Your First Listing →</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Wishlist Tab -->
+  <div class="ptab-content" id="ptab-wishlist">
+    {% if wishlist_listings %}
+    <div class="listings-grid">
+      {% for item in wishlist_listings %}
+      <a href="{% url 'listing_detail' slug=item.college.slug pk=item.pk %}" class="product-card">
+        <div class="card-img">
+          <div class="card-img-inner">
+            {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
+            {% else %}
+            <span class="card-emoji">{{ item.emoji }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">{{ item.title }}</div>
+          <div class="card-price-row">
+            <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
+          </div>
+          <div class="card-meta">{{ item.category }} · {{ item.time_ago }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state-sm">
+      <div class="empty-icon-sm">🤍</div>
+      <p>Your wishlist is empty. Browse listings and save items you like!</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Sold Tab -->
+  <div class="ptab-content" id="ptab-sold">
+    {% if sold_listings %}
+    <div class="listings-grid">
+      {% for item in sold_listings %}
+      <div class="product-card sold-card">
+        <div class="card-img">
+          <div class="card-img-inner">
+            {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy" />
+            {% else %}
+            <span class="card-emoji">{{ item.emoji }}</span>
+            {% endif %}
+          </div>
+          <div class="card-sold-overlay">SOLD</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">{{ item.title }}</div>
+          <div class="card-price-row">
+            <div class="card-price">₹{{ item.price|floatformat:0 }}</div>
+          </div>
+          <div class="card-meta">Sold · {{ item.updated_at|date:"d M Y" }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state-sm">
+      <p>No items sold yet.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Inbox Tab -->
+  <div class="ptab-content" id="ptab-inbox">
+    {% if inbox_threads %}
+    <div class="inbox-list">
+      {% for thread in inbox_threads %}
+      <a href="{% url 'listing_detail' slug=thread.listing.college.slug pk=thread.listing.pk %}" class="inbox-thread {% if not thread.last_msg.is_read and thread.last_msg.receiver == user %}inbox-unread{% endif %}">
+        <div class="inbox-avatar">{{ thread.other_user.first_name.0|default:thread.other_user.username.0|upper }}</div>
+        <div class="inbox-content">
+          <div class="inbox-top">
+            <span class="inbox-name">{{ thread.other_user.get_full_name|default:thread.other_user.username }}</span>
+            <span class="inbox-time">{{ thread.last_msg.created_at|date:"h:i A" }}</span>
+          </div>
+          <div class="inbox-listing">re: {{ thread.listing.title|truncatewords:6 }}</div>
+          <div class="inbox-preview">{{ thread.last_msg.content|truncatewords:10 }}</div>
+        </div>
+        {% if not thread.last_msg.is_read and thread.last_msg.receiver == user %}
+        <div class="inbox-dot"></div>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state-sm">
+      <div class="empty-icon-sm">💬</div>
+      <p>No messages yet. When buyers contact you, they'll appear here.</p>
+    </div>
+    {% endif %}
+  </div>
+
 </div>
-</div>
+
+<style>
+.inbox-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--red);
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+.inbox-list { display: flex; flex-direction: column; gap: 2px; }
+.inbox-thread {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+.inbox-thread:hover { border-color: var(--primary); background: var(--surface-hover); }
+.inbox-unread { border-left: 3px solid var(--primary); background: var(--primary-light); }
+.inbox-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--hero-gradient); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px; flex-shrink: 0;
+}
+.inbox-content { flex: 1; min-width: 0; }
+.inbox-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.inbox-name { font-weight: 600; font-size: 14px; }
+.inbox-time { font-size: 12px; color: var(--text3); }
+.inbox-listing { font-size: 12px; color: var(--primary); margin-bottom: 2px; }
+.inbox-preview { font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inbox-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--primary); flex-shrink: 0;
+}
+</style>
 {% endblock %}
