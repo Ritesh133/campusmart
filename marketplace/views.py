@@ -213,8 +213,10 @@ def create_listing_view(request, slug):
 
     context = {
         'college': college,
+        'listing': None,
         'categories': Listing.CATEGORY_CHOICES,
         'conditions': Listing.CONDITION_CHOICES,
+        'is_edit': False,
     }
     return render(request, 'marketplace/sell.html', context)
 
