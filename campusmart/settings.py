@@ -76,7 +76,7 @@ if os.environ.get('DB_HOST') or os.environ.get('VERCEL', '1') == '1':
             'USER': os.environ.get('DB_USER', 'postgres.jixuwhmmzdxdrswaeplc'),
             'PASSWORD': os.environ.get('DB_PASSWORD', 'CampusMart2026'),
             'HOST': os.environ.get('DB_HOST', 'aws-1-ap-northeast-2.pooler.supabase.com'),
-            'PORT': os.environ.get('DB_PORT', '5432'),
+            'PORT': os.environ.get('DB_PORT', '6543'), # 6543 Transaction Pooler is essential for Serverless
             'OPTIONS': {
                 'connect_timeout': 10,
             },
