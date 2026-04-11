@@ -38,9 +38,10 @@ def signup_view(request):
                     messages.error(request, f"Signup Error: {error_msg}")
                     return render(request, 'auth/signup.html', {'form': form})
                 
-                # If 'session' is null, email confirmation is required
+                # The GoTrue API returns a user directly or within a data dict.
+                # If there's no session / access_token, it means confirmation is required.
                 data = res.json()
-                requires_confirmation = data.get('session') is None and data.get('user') is not None
+                requires_confirmation = data.get('access_token') is None and data.get('session') is None
 
             # Use email prefix as username (unique)
             username = email.split('@')[0]
@@ -63,7 +64,7 @@ def signup_view(request):
             )
 
             if SUPABASE_KEY and requires_confirmation:
-                messages.success(request, 'Registration successful! Please check your email to verify your account.')
+                messages.success(request, 'Registration successful! A confirmation email has been sent. Please confirm your email first before logging in.')
                 return redirect('login')
             else:
                 # Auto login directly if no confirmation is required
@@ -107,6 +108,8 @@ def login_view(request):
                         user = None
                 else:
                     error_msg = res.json().get('error_description', 'Invalid email or password.')
+                    if 'Email not confirmed' in error_msg:
+                        error_msg = 'Please confirm your email first!'
                     messages.error(request, error_msg)
             else:
                 # Fallback to Django auth
