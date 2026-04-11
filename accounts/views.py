@@ -7,15 +7,41 @@ from core.models import UserProfile, Listing, WishlistItem
 from .forms import SignupForm, LoginForm
 
 
+import os
+import requests
+
 def signup_view(request):
-    """Handle user registration with college selection."""
+    """Handle user registration with college selection and Supabase Auth."""
     if request.user.is_authenticated:
         return redirect('college_select')
 
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
+            email = form.cleaned_data['email'].lower()
+            password = form.cleaned_data['password']
+
+            SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://jixuwhmmzdxdrswaeplc.supabase.co')
+            SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
+            requires_confirmation = False
+
+            if SUPABASE_KEY:
+                # Register with Supabase Auth
+                res = requests.post(
+                    f"{SUPABASE_URL}/auth/v1/signup",
+                    headers={'apikey': SUPABASE_KEY, 'Content-Type': 'application/json'},
+                    json={'email': email, 'password': password},
+                    timeout=10
+                )
+                if res.status_code not in (200, 201):
+                    error_msg = res.json().get('msg', 'Registration failed with Supabase.')
+                    messages.error(request, f"Signup Error: {error_msg}")
+                    return render(request, 'auth/signup.html', {'form': form})
+                
+                # If 'session' is null, email confirmation is required
+                data = res.json()
+                requires_confirmation = data.get('session') is None and data.get('user') is not None
+
             # Use email prefix as username (unique)
             username = email.split('@')[0]
             base_username = username
@@ -27,7 +53,7 @@ def signup_view(request):
             user = User.objects.create_user(
                 username=username,
                 email=email,
-                password=form.cleaned_data['password'],
+                password=password,
                 first_name=form.cleaned_data['first_name'],
                 last_name=form.cleaned_data.get('last_name', ''),
             )
@@ -35,10 +61,15 @@ def signup_view(request):
                 user=user,
                 college=form.cleaned_data['college'],
             )
-            # Auto login after signup
-            login(request, user)
-            messages.success(request, f'Welcome to CampusMart, {user.first_name}! 🎉')
-            return redirect('college_home', slug=form.cleaned_data['college'].slug)
+
+            if SUPABASE_KEY and requires_confirmation:
+                messages.success(request, 'Registration successful! Please check your email to verify your account.')
+                return redirect('login')
+            else:
+                # Auto login directly if no confirmation is required
+                login(request, user)
+                messages.success(request, f'Welcome to CampusMart, {user.first_name}! 🎉')
+                return redirect('college_home', slug=form.cleaned_data['college'].slug)
     else:
         form = SignupForm()
 
@@ -55,22 +86,50 @@ def login_view(request):
         if form.is_valid():
             email = form.cleaned_data['email'].lower()
             password = form.cleaned_data['password']
-            # Find user by email
-            try:
-                user_obj = User.objects.get(email=email)
-                user = authenticate(request, username=user_obj.username, password=password)
-            except User.DoesNotExist:
-                user = None
+            
+            SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://jixuwhmmzdxdrswaeplc.supabase.co')
+            SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
+
+            user = None
+
+            if SUPABASE_KEY:
+                # Authenticate with Supabase
+                res = requests.post(
+                    f"{SUPABASE_URL}/auth/v1/token?grant_type=password",
+                    headers={'apikey': SUPABASE_KEY, 'Content-Type': 'application/json'},
+                    json={'email': email, 'password': password},
+                    timeout=10
+                )
+                if res.status_code == 200:
+                    try:
+                        user = User.objects.get(email=email)
+                    except User.DoesNotExist:
+                        user = None
+                else:
+                    error_msg = res.json().get('error_description', 'Invalid email or password.')
+                    messages.error(request, error_msg)
+            else:
+                # Fallback to Django auth
+                try:
+                    user_obj = User.objects.get(email=email)
+                    user = authenticate(request, username=user_obj.username, password=password)
+                except User.DoesNotExist:
+                    user = None
+                
+                if user is None:
+                    messages.error(request, 'Invalid email or password.')
 
             if user is not None:
+                # We need to set backend if authenticate() wasn't used
+                if not hasattr(user, 'backend'):
+                    user.backend = 'django.contrib.auth.backends.ModelBackend'
+                    
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.first_name or user.username}! 👋')
                 # Redirect to their college marketplace
                 if hasattr(user, 'profile') and user.profile.college:
                     return redirect('college_home', slug=user.profile.college.slug)
                 return redirect('college_select')
-            else:
-                messages.error(request, 'Invalid email or password.')
     else:
         form = LoginForm()
 
