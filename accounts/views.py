@@ -172,9 +172,14 @@ def forgot_password_view(request):
             )
             
             if res.status_code not in (200, 201, 204):
+                error_info = res.json().get('msg') or res.json().get('error_description') or res.text
+                messages.error(request, f"Supabase Error ({res.status_code}): {error_info}")
                 print(f"DEBUG: Supabase recover failed for {email}: {res.status_code} - {res.text}")
-        
-        messages.success(request, "If that email is registered, we've sent a password reset link.")
+            else:
+                messages.success(request, "If that email is registered, we've sent a password reset link.")
+        else:
+            messages.error(request, "Supabase configuration missing or email empty.")
+            
         return redirect('login')
     
     return render(request, 'auth/forgot_password.html')
