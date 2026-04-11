@@ -6,19 +6,19 @@
 :root,
 [data-theme="light"] {
   --bg: #ffffff;
-  --bg2: #f8f9fc;
-  --bg3: #f0f2f7;
+  --bg2: #f5f5f5;
+  --bg3: #eeeeee;
   --surface: #ffffff;
-  --surface-hover: #f8f9fc;
-  --text: #1a1d26;
-  --text2: #5b6178;
-  --text3: #8b90a5;
-  --border: #e4e7ef;
-  --border-light: #eef0f6;
-  --primary: #4F46E5;
-  --primary-hover: #4338CA;
-  --primary-light: #EEF2FF;
-  --primary-glow: rgba(79, 70, 229, 0.15);
+  --surface-hover: #f9f9f9;
+  --text: #1a1a1a;
+  --text2: #5c5c5c;
+  --text3: #8c8c8c;
+  --border: #e0e0e0;
+  --border-light: #eeeeee;
+  --primary: #3A77FF;
+  --primary-hover: #2B61DC;
+  --primary-light: #ebf2ff;
+  --primary-glow: rgba(58, 119, 255, 0.15);
   --green: #059669;
   --green-light: #ECFDF5;
   --red: #DC2626;
@@ -34,26 +34,26 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
-  --hero-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #9333EA 100%);
+  --hero-gradient: linear-gradient(135deg, #3A77FF 0%, #2B61DC 100%);
   --card-hover-y: -4px;
 }
 
 /* ──────── Dark Theme ──────── */
 [data-theme="dark"] {
-  --bg: #0f1117;
-  --bg2: #171923;
-  --bg3: #1e2030;
-  --surface: #1a1d2e;
-  --surface-hover: #22253a;
-  --text: #e8eaf0;
-  --text2: #a0a4b8;
-  --text3: #6b7089;
-  --border: #2a2d40;
-  --border-light: #232638;
-  --primary: #6366F1;
-  --primary-hover: #818CF8;
-  --primary-light: rgba(99, 102, 241, 0.12);
-  --primary-glow: rgba(99, 102, 241, 0.2);
+  --bg: #121212;
+  --bg2: #1e1e1e;
+  --bg3: #2a2a2a;
+  --surface: #1a1a1a;
+  --surface-hover: #222222;
+  --text: #eaeaea;
+  --text2: #a0a0a0;
+  --text3: #707070;
+  --border: #333333;
+  --border-light: #2a2a2a;
+  --primary: #3A77FF;
+  --primary-hover: #5289FF;
+  --primary-light: rgba(58, 119, 255, 0.12);
+  --primary-glow: rgba(58, 119, 255, 0.2);
   --green: #10B981;
   --green-light: rgba(16, 185, 129, 0.1);
   --red: #EF4444;
@@ -62,7 +62,7 @@
   --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
   --shadow-lg: 0 12px 36px rgba(0,0,0,0.4);
   --shadow-xl: 0 20px 50px rgba(0,0,0,0.5);
-  --hero-gradient: linear-gradient(135deg, #312E81 0%, #4C1D95 50%, #581C87 100%);
+  --hero-gradient: linear-gradient(135deg, #2B61DC 0%, #3A77FF 100%);
 }
 
 /* ──────── Reset & Base ──────── */
