@@ -154,14 +154,25 @@ def forgot_password_view(request):
         SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
         
         if SUPABASE_KEY and email:
-            # We use anon public key or service key for recover endpoint. Service key works.
+            # Construct redirect URL for password update page
+            from django.urls import reverse
+            redirect_to = request.build_absolute_uri(reverse('update_password'))
+            
+            # Auth endpoints require Bearer token and apikey
+            headers = {
+                'apikey': SUPABASE_KEY,
+                'Authorization': f'Bearer {SUPABASE_KEY}',
+                'Content-Type': 'application/json'
+            }
             res = requests.post(
                 f"{SUPABASE_URL}/auth/v1/recover",
-                headers={'apikey': SUPABASE_KEY, 'Content-Type': 'application/json'},
-                json={'email': email},
+                headers=headers,
+                json={'email': email, 'data': {'redirectTo': redirect_to}},
                 timeout=10
             )
-            # Render a generic response to prevent email enumeration
+            
+            if res.status_code not in (200, 201, 204):
+                print(f"DEBUG: Supabase recover failed for {email}: {res.status_code} - {res.text}")
         
         messages.success(request, "If that email is registered, we've sent a password reset link.")
         return redirect('login')
