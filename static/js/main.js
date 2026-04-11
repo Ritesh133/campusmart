@@ -21,6 +21,11 @@ function toggleTheme() {
     const btn = document.getElementById('theme-btn');
     if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
   }
+  
+  // Intercept Supabase Auth Recovery hash from email link
+  if (window.location.hash.includes('type=recovery') && !window.location.pathname.includes('/accounts/update-password/')) {
+    window.location.href = '/accounts/update-password/' + window.location.hash;
+  }
 })();
 
 

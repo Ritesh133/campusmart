@@ -146,6 +146,74 @@ def logout_view(request):
     return redirect('college_select')
 
 
+def forgot_password_view(request):
+    """Send Supabase password recovery email."""
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://jixuwhmmzdxdrswaeplc.supabase.co')
+        SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
+        
+        if SUPABASE_KEY and email:
+            # We use anon public key or service key for recover endpoint. Service key works.
+            res = requests.post(
+                f"{SUPABASE_URL}/auth/v1/recover",
+                headers={'apikey': SUPABASE_KEY, 'Content-Type': 'application/json'},
+                json={'email': email},
+                timeout=10
+            )
+            # Render a generic response to prevent email enumeration
+        
+        messages.success(request, "If that email is registered, we've sent a password reset link.")
+        return redirect('login')
+    
+    return render(request, 'auth/forgot_password.html')
+
+
+import json
+from django.http import JsonResponse
+
+def update_password_view(request):
+    """Renders the update password form. Handles proxying the token to Supabase."""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            access_token = data.get('access_token')
+            new_password = data.get('password')
+            
+            SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://jixuwhmmzdxdrswaeplc.supabase.co')
+            SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
+
+            if not access_token or not new_password:
+                return JsonResponse({'success': False, 'error': 'Missing token or password'})
+
+            # Use the user's access token to update their password
+            res = requests.put(
+                f"{SUPABASE_URL}/auth/v1/user",
+                headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'},
+                json={'password': new_password},
+                timeout=10
+            )
+
+            if res.status_code == 200:
+                user_data = res.json()
+                email = user_data.get('email')
+                if email:
+                    try:
+                        u = User.objects.get(email=email)
+                        u.set_password(new_password)
+                        u.save(update_fields=['password'])
+                    except User.DoesNotExist:
+                        pass
+                return JsonResponse({'success': True})
+            else:
+                error = res.json().get('msg') or res.json().get('error_description') or 'Failed to update password'
+                return JsonResponse({'success': False, 'error': error})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return render(request, 'auth/update_password.html')
+
+
 @login_required
 def profile_view(request):
     """Display user profile with their listings, wishlist, sold items, and message inbox."""
